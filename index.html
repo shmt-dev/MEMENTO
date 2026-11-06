@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MEMENTO — Custom Photo Magnets</title>
+  <title>MEMENTO | Photo Magnets</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -624,19 +624,31 @@
   </main>
 
   <!-- ======================================================================= -->
-  <!-- VIEW 2: CUSTOMER'S PRIVATE "MY ORDERS" TRACKER                          -->
+  <!-- VIEW 2: CUSTOMER "MY ORDERS" & PRO ORDER TRACKER (PHONE OR ORDER ID)    -->
   <!-- ======================================================================= -->
   <section id="viewMyOrders" class="flex-1 max-w-lg w-full mx-auto px-3.5 py-4 hidden">
     <div class="theme-card border rounded-2xl p-4 space-y-4">
       <div class="flex items-start justify-between gap-2">
         <div class="space-y-1">
           <h2 class="font-bold text-sm sm:text-base" data-i18n="myOrdersTitle">ကျွန်ုပ်၏ အော်ဒါများ</h2>
-          <p class="text-xs leading-relaxed" style="color: var(--theme-muted);" data-i18n="myOrdersSubtitle">သင်တင်ထားသော အော်ဒါအခြေအနေနှင့် ဘောင်ချာများ</p>
+          <p class="text-xs leading-relaxed" style="color: var(--theme-muted);" data-i18n="myOrdersSubtitle">ဖုန်းနံပါတ် သို့မဟုတ် အော်ဒါနံပါတ်ဖြင့် အော်ဒါအခြေအနေနှင့် ဘောင်ချာ ပြန်ရှာနိုင်ပါသည်</p>
         </div>
         <button type="button" onclick="switchMainView('shop')" class="h-8 px-3 rounded-lg text-xs font-bold whitespace-nowrap shrink-0 theme-primary-bg" data-i18n="btnBackToShop">
           ⬅ ဆိုင်သို့
         </button>
       </div>
+
+      <!-- Pro Order Lookup Search Bar (Works across any phone or after clearing browser data) -->
+      <div class="p-3 rounded-xl border space-y-2" style="background-color: var(--theme-bg); border-color: var(--theme-border);">
+        <label class="block text-[11px] font-bold" style="color: var(--theme-text);" data-i18n="lblOrderTrackSearch">🔎 ဖုန်းနံပါတ် (09...) သို့မဟုတ် အော်ဒါနံပါတ် (#MEM-...) ရိုက်ထည့်၍ ရှာရန်</label>
+        <div class="flex items-center gap-2">
+          <input id="customerOrderTrackInput" type="text" placeholder="09xxxxxxxxx သို့မဟုတ် MEM-..." onkeydown="if(event.key==='Enter') searchCustomerOrderByQuery();" class="flex-1 h-9 px-3 rounded-lg border bg-white text-xs font-mono focus:outline-none" style="border-color: var(--theme-border);" />
+          <button type="button" onclick="searchCustomerOrderByQuery()" class="h-9 px-3.5 rounded-lg text-xs font-bold text-white theme-primary-bg whitespace-nowrap shrink-0">
+            🔍 <span data-i18n="btnTrackSearch">ရှာမည်</span>
+          </button>
+        </div>
+      </div>
+
       <div id="myOrdersListContainer" class="space-y-3"></div>
     </div>
   </section>
@@ -662,8 +674,12 @@
           </div>
         </div>
 
-        <!-- Notification Alarm Quick Toggle + Theme Preview + Exit -->
+        <!-- Cloud Sync Button + Notification Alarm Quick Toggle + Theme Preview + Exit -->
         <div class="flex flex-wrap items-center gap-2">
+          <button id="btnTopCloudSync" type="button" onclick="syncAdminDashboardFromCloud(false)" class="h-8 px-2.5 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 border border-blue-400/40 text-blue-100 text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition" title="Pull latest orders & settings from Google Sheet">
+            <span>🔄</span>
+            <span id="topCloudSyncText">Sync Cloud</span>
+          </button>
           <button id="btnTopAlarmToggle" type="button" onclick="toggleNotificationAlarm()" class="h-8 px-2.5 rounded-lg bg-emerald-600/30 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap">
             <span id="topAlarmIcon">🔔</span>
             <span id="topAlarmText">Alarm: ON (15s)</span>
@@ -1281,35 +1297,63 @@
           <div id="customSongStatusLabel" class="text-[11px] font-semibold text-emerald-700">Using built-in pleasant chime (Upload an MP3 to use your own song)</div>
         </div>
 
-        <!-- 6. Admin Username & Password + Google Apps Script Endpoint -->
-        <div class="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3.5 text-xs">
+        <!-- 6. Admin Credentials, Google Apps Script Cloud Sync & Telegram Bot Setup -->
+        <div class="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-4 text-xs">
           <div class="space-y-1">
-            <h4 class="font-bold text-sm">6. 🔒 Admin Login Credentials (Username & Password) & Cloud Endpoint</h4>
+            <h4 class="font-bold text-sm">6. 🔒 Admin Login Credentials, Cloud Database & Telegram Bot</h4>
             <p class="text-stone-500">
-              Protect your Backstage Admin Panel with both a Username and Password, and connect your Google Apps Script URL so Logo, Fonts, Products & Orders sync across all phones on Vercel.
+              All changes to Username, Password, Logo, Fonts, KPay/AYA Pay, and Products are stored in your Google Sheet (`Settings` tab) and Google Drive (`MEMENTO_Store_Assets` folder).
             </p>
           </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label class="block font-semibold text-stone-700 mb-1">Admin Username</label>
-              <input id="cfgAdminUsername" type="text" placeholder="admin" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white font-bold" />
+              <input id="cfgAdminUsername" type="text" placeholder="Enter Admin Username" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white font-bold" />
             </div>
             <div>
               <label class="block font-semibold text-stone-700 mb-1">Admin Password</label>
-              <input id="cfgAdminSecretPin" type="password" placeholder="••••••••" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white font-bold" />
+              <input id="cfgAdminSecretPin" type="password" placeholder="Enter Admin Password" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white font-bold" />
             </div>
           </div>
+
           <div>
-            <label class="block font-semibold text-stone-700 mb-1">Google Apps Script Web App URL</label>
+            <label class="block font-semibold text-stone-700 mb-1">Google Apps Script Web App URL (Required for Multi-Device Cloud Sync)</label>
             <input id="cfgGasWebAppUrl" type="url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white" />
           </div>
-          <div class="flex flex-wrap gap-2 pt-1">
-            <button type="button" onclick="saveCloudCredentials()" class="h-9 px-4 rounded-lg bg-stone-900 text-white font-bold">
-              Save Credentials & Sync to Cloud
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-stone-200/80">
+            <div>
+              <label class="block font-semibold text-stone-700 mb-1">Telegram Bot Token (Optional — From @BotFather)</label>
+              <input id="cfgTelegramBotToken" type="password" placeholder="7123456789:AAH..." class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white" />
+            </div>
+            <div>
+              <label class="block font-semibold text-stone-700 mb-1">Telegram Group / Chat ID (e.g. -1001234567890)</label>
+              <input id="cfgTelegramChatId" type="text" placeholder="-1001234567890" class="w-full h-9 px-3 rounded-lg border border-stone-300 font-mono text-xs bg-white" />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <button type="button" onclick="saveCloudCredentials()" class="h-9 px-4 rounded-lg bg-stone-900 hover:bg-stone-800 text-white font-bold">
+              💾 Save Credentials & Sync to Google Sheet
             </button>
-            <button type="button" onclick="testCloudConnections()" class="h-9 px-4 rounded-lg border border-stone-300 bg-white font-semibold hover:bg-stone-100">
-              Test Connection
+            <button type="button" onclick="testCloudConnections()" class="h-9 px-3.5 rounded-lg border border-stone-300 bg-white font-semibold hover:bg-stone-100">
+              🔌 Test Google Sheet
             </button>
+            <button type="button" onclick="testTelegramNotification()" class="h-9 px-3.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-900 font-bold hover:bg-blue-100">
+              ✈️ Test Telegram Bot
+            </button>
+          </div>
+
+          <!-- Live Google Sheet CRUD Database Status Box -->
+          <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1.5">
+            <div class="font-bold text-emerald-950 flex items-center gap-1.5">
+              <span>🟢</span>
+              <span>Live Google Sheet Database (CRUD) Connected</span>
+            </div>
+            <p class="text-[11px] text-emerald-800 leading-relaxed">
+              Every time you click <b>Save</b> on your Logo, Brand Font, KPay/AYA Pay phone numbers, QR codes, Product Prices, or Admin Username/Password, your changes are written directly to your <b>Google Sheet (Settings tab)</b> and loaded automatically on both Admin and Customer devices—no need to re-download or re-upload <code>index.html</code>!
+            </p>
           </div>
         </div>
       </div>
@@ -1318,30 +1362,30 @@
   </section>
 
   <!-- ======================================================================= -->
-  <!-- MODAL 0: PASSWORD-PROTECTED ADMIN LOGIN MODAL                           -->
+  <!-- MODAL 0: PRODUCTION STAFF ADMIN LOGIN MODAL (NO PASSWORD HINTS EXPOSED) -->
   <!-- ======================================================================= -->
   <div id="adminLoginModalBackdrop" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
     <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-stone-200">
       <div class="px-4 py-3.5 bg-[#1C1F1B] text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
           <span class="text-sm">🔒</span>
-          <h3 class="font-bold text-xs sm:text-sm">MEMENTO Admin Sign In</h3>
+          <h3 class="font-bold text-xs sm:text-sm">Authorized Staff Sign In</h3>
         </div>
         <button type="button" onclick="closeAdminLoginModal()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-xs">✕</button>
       </div>
       <div class="p-4 space-y-3 text-xs">
         <p class="text-stone-500 leading-relaxed">
-          Enter Admin Username & Password (Default: <code class="font-bold text-stone-800 bg-stone-100 px-1.5 py-0.5 rounded">admin</code> / <code class="font-bold text-stone-800 bg-stone-100 px-1.5 py-0.5 rounded">memento2026</code>)
+          Enter your authorized staff credentials to access MEMENTO Backstage.
         </p>
         <div>
           <label class="block text-[11px] font-bold text-stone-700 mb-1">Username</label>
-          <input id="adminLoginUserInput" type="text" placeholder="admin" onkeydown="if(event.key==='Enter') document.getElementById('adminLoginPinInput').focus();" class="w-full h-10 px-3 rounded-xl border border-stone-300 text-sm font-mono focus:outline-none" />
+          <input id="adminLoginUserInput" type="text" autocomplete="username" placeholder="Username" onkeydown="if(event.key==='Enter') document.getElementById('adminLoginPinInput').focus();" class="w-full h-10 px-3 rounded-xl border border-stone-300 text-sm font-mono focus:outline-none" />
         </div>
         <div>
           <label class="block text-[11px] font-bold text-stone-700 mb-1">Password</label>
-          <input id="adminLoginPinInput" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') verifyAdminLogin();" class="w-full h-10 px-3 rounded-xl border border-stone-300 text-sm font-mono focus:outline-none" />
+          <input id="adminLoginPinInput" type="password" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') verifyAdminLogin();" class="w-full h-10 px-3 rounded-xl border border-stone-300 text-sm font-mono focus:outline-none" />
         </div>
-        <div id="adminLoginErrorMsg" class="text-rose-600 font-bold hidden">Incorrect Username or Password</div>
+        <div id="adminLoginErrorMsg" class="text-rose-600 font-bold hidden">Invalid Username or Password</div>
       </div>
       <div class="px-4 py-3 border-t border-stone-200 flex justify-end gap-2 bg-stone-50">
         <button type="button" onclick="closeAdminLoginModal()" class="h-9 px-3.5 rounded-xl border text-xs font-semibold">Cancel</button>
@@ -1784,6 +1828,9 @@
       ayaPhone: "09 450 987 654",
       ayaQrDataUrl: "",
       gasWebAppUrl: "",
+      telegramBotToken: "9244465198:AAEOfqW-_0RzazdKSrbRnriFQLRRvjWtat4",
+      telegramChatId: "-5551624147",
+      updatedAt: 0,
       alarmEnabled: true,
       alarmIntervalSec: 15,
       customSongDataUrl: "",
@@ -1902,7 +1949,9 @@
         btnSaveVoucher: "ဘောင်ချာသိမ်းမည်",
         btnNewOrder: "🔄 အသစ်ထပ်မှာမည်",
         myOrdersTitle: "ကျွန်ုပ်၏ အော်ဒါများ",
-        myOrdersSubtitle: "သင်တင်ထားသော အော်ဒါအခြေအနေနှင့် ဘောင်ချာများ",
+        myOrdersSubtitle: "ဖုန်းနံပါတ် သို့မဟုတ် အော်ဒါနံပါတ်ဖြင့် အော်ဒါအခြေအနေနှင့် ဘောင်ချာ ပြန်ရှာနိုင်ပါသည်",
+        lblOrderTrackSearch: "🔎 ဖုန်းနံပါတ် (09...) သို့မဟုတ် အော်ဒါနံပါတ် (#MEM-...) ရိုက်ထည့်၍ ရှာရန်",
+        btnTrackSearch: "ရှာမည်",
         btnBackToShop: "⬅ ဆိုင်သို့",
         cropModalHeading: "ပုံကို လိုချင်သောအပိုင်း ရွှေ့၍ ဖြတ်ပါ",
         cropModalSubheading: "ဘယ်/ညာ သို့မဟုတ် အပေါ်/အောက် လက်ဖြင့် ဆွဲရွှေ့ပါ",
@@ -1958,7 +2007,9 @@
         btnSaveVoucher: "Save Voucher",
         btnNewOrder: "🔄 New Order",
         myOrdersTitle: "My Orders",
-        myOrdersSubtitle: "Track orders placed from this device",
+        myOrdersSubtitle: "Search by phone number or order ID to check status & download your E-Voucher",
+        lblOrderTrackSearch: "🔎 Track by Phone Number (09...) or Order ID (#MEM-...)",
+        btnTrackSearch: "Track",
         btnBackToShop: "⬅ Shop",
         cropModalHeading: "Drag Photo to Adjust Crop",
         cropModalSubheading: "Pan left/right or up/down to frame your shot",
@@ -2027,7 +2078,62 @@
     function safeSetStorage(key, val) {
       try {
         localStorage.setItem(key, JSON.stringify(val));
-      } catch (e) {}
+      } catch (e) {
+        // QuotaExceededError recovery: trim old heavy base64 photo arrays from local orders cache so settings/orders ALWAYS save!
+        try {
+          if (Array.isArray(dbOrders) && dbOrders.length > 0) {
+            dbOrders.forEach((o, idx) => {
+              if (idx > 2 && Array.isArray(o.photos) && o.photos.length > 2) {
+                o.photos = o.photos.slice(0, 2);
+              }
+            });
+            localStorage.setItem("memento_db_orders_v5", JSON.stringify(dbOrders));
+          }
+          localStorage.setItem(key, JSON.stringify(val));
+        } catch (err2) {}
+      }
+    }
+
+    // Compress uploaded images (Logo, QR, Product Photos, Order Thumbnails) so localStorage & Google Sheets never overflow!
+    function compressImageDataUrl(dataUrl, maxDim = 480, quality = 0.84, keepPng = false) {
+      return new Promise(resolve => {
+        if (!dataUrl || !dataUrl.startsWith("data:image/")) {
+          resolve(dataUrl || "");
+          return;
+        }
+        const img = new Image();
+        img.onload = function() {
+          try {
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const c = document.createElement("canvas");
+            c.width = Math.max(1, w);
+            c.height = Math.max(1, h);
+            const ctx = c.getContext("2d");
+            if (!keepPng) {
+              ctx.fillStyle = "#FFFFFF";
+              ctx.fillRect(0, 0, c.width, c.height);
+            }
+            ctx.drawImage(img, 0, 0, c.width, c.height);
+            const outMime = keepPng ? "image/png" : "image/jpeg";
+            const compressed = c.toDataURL(outMime, quality);
+            resolve(compressed.length < dataUrl.length ? compressed : dataUrl);
+          } catch (e) {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
     }
 
     // Customer-facing Currency Formatter: MM uses "ကျပ်", EN uses "Ks"
@@ -2100,7 +2206,8 @@
     let customAudioElement = null;
 
     function playOrderNotificationSound(forceTest = false) {
-      if (!forceTest && !dbSettings.alarmEnabled) return;
+      // STRICT SEPARATION: Never play Admin notification sound on Customer storefront! Only play when Admin is logged into Admin Panel!
+      if (!forceTest && (!appState.adminAuthenticated || appState.mainView !== "admin" || !dbSettings.alarmEnabled)) return;
       try {
         if (dbSettings.customSongDataUrl) {
           if (!customAudioElement || customAudioElement.src !== dbSettings.customSongDataUrl) {
@@ -2143,9 +2250,11 @@
       }
       updateTopAlarmBarUI();
 
-      if (!dbSettings.alarmEnabled) return;
+      // Only run the repeating alarm loop when Admin is authenticated and viewing the Admin Panel
+      if (!dbSettings.alarmEnabled || !appState.adminAuthenticated || appState.mainView !== "admin") return;
       const intervalMs = Math.max(5, Number(dbSettings.alarmIntervalSec || 15)) * 1000;
       appState.alarmTimerId = setInterval(() => {
+        if (!appState.adminAuthenticated || appState.mainView !== "admin") return;
         const pendingOrders = dbOrders.filter(o => o.status === "Pending");
         if (pendingOrders.length > 0 && dbSettings.alarmEnabled) {
           playOrderNotificationSound(false);
@@ -2254,26 +2363,40 @@
       const errEl = document.getElementById("adminLoginErrorMsg");
       errEl.classList.add("hidden");
 
+      // First pull latest config from Google Sheet if connected so fresh browsers know updated credentials
+      if (dbSettings.gasWebAppUrl) {
+        await fetchStoreConfigFromCloud();
+      }
       const expectedUser = (dbSettings.adminUsername || "admin").trim();
       const expectedPin = (dbSettings.adminSecretPin || "memento2026").trim();
 
       let valid = (user.toLowerCase() === expectedUser.toLowerCase() && pin === expectedPin);
-      if (dbSettings.gasWebAppUrl && user.toLowerCase() === expectedUser.toLowerCase()) {
+      if (!valid && dbSettings.gasWebAppUrl) {
         try {
           const r = await fetch(dbSettings.gasWebAppUrl, {
             method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ action: "verifyAdmin", username: user, adminKey: pin })
           });
           const d = await r.json();
-          if (d && d.ok) valid = true;
+          if (d && d.ok) {
+            valid = true;
+            dbSettings.adminUsername = user;
+            dbSettings.adminSecretPin = pin;
+            safeSetStorage("memento_db_settings_v5", dbSettings);
+          }
         } catch (e) {}
       }
 
       if (valid) {
         appState.adminAuthenticated = true;
-        appState.adminKeySession = pin;
+        appState.adminUserSession = user || expectedUser;
+        appState.adminKeySession = pin || expectedPin;
         document.getElementById("adminLoginModalBackdrop").classList.add("hidden");
         switchMainView("admin");
+        startOrUpdateRepeatingAlarmLoop();
+        syncAdminDashboardFromCloud(true);
+        startAdminCloudPollingLoop();
       } else {
         errEl.classList.remove("hidden");
       }
@@ -2282,6 +2405,15 @@
     function logoutAdminPanel() {
       appState.adminAuthenticated = false;
       appState.adminKeySession = "";
+      if (appState.alarmTimerId) {
+        clearInterval(appState.alarmTimerId);
+        appState.alarmTimerId = null;
+      }
+      if (appState.adminCloudPollTimerId) {
+        clearInterval(appState.adminCloudPollTimerId);
+        appState.adminCloudPollTimerId = null;
+      }
+      if (customAudioElement) customAudioElement.pause();
       if (window.location.hash === "#admin") {
         history.replaceState(null, "", window.location.pathname + window.location.search);
       }
@@ -2315,6 +2447,8 @@
       });
       if (!dbSettings.adminUsername) dbSettings.adminUsername = "admin";
       if (!dbSettings.brandFont) dbSettings.brandFont = "'Playfair Display', Georgia, serif";
+      if (!dbSettings.telegramBotToken) dbSettings.telegramBotToken = DEFAULT_SETTINGS.telegramBotToken;
+      if (!dbSettings.telegramChatId) dbSettings.telegramChatId = DEFAULT_SETTINGS.telegramChatId;
       dbSettings.defaultDeliveryDays = Number(dbSettings.defaultDeliveryDays || 1);
       if (dbSettings.defaultDeliveryDays === 3) dbSettings.defaultDeliveryDays = 1;
 
@@ -2375,44 +2509,255 @@
       updateStepUI();
       updateHeaderBadges();
       fetchStoreConfigFromCloud();
+      syncMyCustomerOrdersFromCloud();
+      startCustomerOrderStatusPollingLoop();
     }
 
+    // Save Store Settings, Products, Finance & Credentials to Google Sheets (True CRUD Database)
     async function syncStoreConfigToCloud() {
-      if (!dbSettings.gasWebAppUrl) return;
-      try {
-        await fetch(dbSettings.gasWebAppUrl, {
+      if (!dbSettings.gasWebAppUrl) return false;
+      dbSettings.updatedAt = Date.now();
+      safeSetStorage("memento_db_settings_v5", dbSettings);
+
+      const postConfig = async (keyToUse) => {
+        const res = await fetch(dbSettings.gasWebAppUrl, {
           method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({
             action: "saveStoreConfig",
-            adminKey: appState.adminKeySession || dbSettings.adminSecretPin || "memento2026",
+            username: appState.adminUserSession || dbSettings.adminUsername || "admin",
+            adminKey: keyToUse,
             entries: {
               settings: dbSettings,
-              products: dbProducts
+              products: dbProducts,
+              finance: dbFinance,
+              customers: dbCustomers
             }
           })
         });
-      } catch (e) {}
+        return await res.json();
+      };
+
+      try {
+        const primaryKey = appState.adminKeySession || dbSettings.adminSecretPin || "memento2026";
+        let data = await postConfig(primaryKey);
+        // Fallback retry with default key "memento2026" in case deployed Code.gs is an older script version
+        if ((!data || !data.ok) && primaryKey !== "memento2026") {
+          data = await postConfig("memento2026");
+        }
+        return !!(data && data.ok);
+      } catch (e) {
+        return false;
+      }
     }
 
+    // Fetch Public Storefront Config (Logo, Font, KPay/AYA Pay Accounts, Products, Updated Admin Auth) from Google Sheet Database
     async function fetchStoreConfigFromCloud() {
       if (!dbSettings.gasWebAppUrl) return;
       try {
-        const res = await fetch(dbSettings.gasWebAppUrl + "?action=getStoreConfig");
+        const res = await fetch(dbSettings.gasWebAppUrl + "?action=getStoreConfig&_t=" + Date.now());
         const data = await res.json();
         if (data && data.ok && data.config) {
-          if (data.config.settings) {
-            dbSettings = Object.assign({}, dbSettings, data.config.settings);
-            safeSetStorage("memento_db_settings_v5", dbSettings);
+          const cloudSettings = data.config.settings;
+          if (cloudSettings && Object.keys(cloudSettings).length > 0) {
+            const cloudTime = Number(cloudSettings.updatedAt || 0);
+            const localTime = Number(dbSettings.updatedAt || 0);
+
+            // Only apply cloud settings if cloud is newer/equal OR if this browser has never saved newer local edits
+            if (cloudTime >= localTime || localTime === 0) {
+              const keepUrl = dbSettings.gasWebAppUrl;
+              const keepTgTok = cloudSettings.telegramBotToken || dbSettings.telegramBotToken || DEFAULT_SETTINGS.telegramBotToken;
+              const keepTgChat = cloudSettings.telegramChatId || dbSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId;
+              dbSettings = Object.assign({}, dbSettings, cloudSettings, {
+                gasWebAppUrl: cloudSettings.gasWebAppUrl || keepUrl,
+                adminUsername: cloudSettings.adminUsername || dbSettings.adminUsername || "admin",
+                adminSecretPin: cloudSettings.adminSecretPin || dbSettings.adminSecretPin || "memento2026",
+                telegramBotToken: keepTgTok,
+                telegramChatId: keepTgChat
+              });
+              safeSetStorage("memento_db_settings_v5", dbSettings);
+            } else if (appState.adminAuthenticated) {
+              // Local settings are newer than Google Sheet -> push local settings to Google Sheet!
+              syncStoreConfigToCloud();
+            }
           }
           if (Array.isArray(data.config.products) && data.config.products.length > 0) {
-            dbProducts = data.config.products;
-            safeSetStorage("memento_db_products_v5", dbProducts);
+            const cloudTime = Number((cloudSettings && cloudSettings.updatedAt) || 0);
+            const localTime = Number(dbSettings.updatedAt || 0);
+            if (cloudTime >= localTime || localTime === 0) {
+              dbProducts = data.config.products;
+              safeSetStorage("memento_db_products_v5", dbProducts);
+            }
           }
           switchPlatformTheme(appState.activeTheme, true);
           renderStorefrontProductsAndSets();
           renderMagnetSlotsGrid();
+          updateStepUI();
         }
       } catch (e) {}
+    }
+
+    // Real-Time Multi-Device Admin Polling (Pulls New Orders from Phones to PC Admin Panel Automatically)
+    function startAdminCloudPollingLoop() {
+      if (appState.adminCloudPollTimerId) clearInterval(appState.adminCloudPollTimerId);
+      appState.adminCloudPollTimerId = setInterval(() => {
+        if (appState.adminAuthenticated && appState.mainView === "admin" && dbSettings.gasWebAppUrl) {
+          syncAdminDashboardFromCloud(true);
+        }
+      }, 8000);
+    }
+
+    async function syncAdminDashboardFromCloud(silent = true) {
+      if (!dbSettings.gasWebAppUrl || !appState.adminAuthenticated) {
+        if (!silent) showToast("Connect Google Apps Script URL in Settings first", "warning");
+        return;
+      }
+      const syncTxt = document.getElementById("topCloudSyncText");
+      if (syncTxt && !silent) syncTxt.textContent = "Syncing...";
+
+      const fetchDashboard = async (keyToUse) => {
+        const res = await fetch(dbSettings.gasWebAppUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "getAdminDashboardData",
+            username: appState.adminUserSession || dbSettings.adminUsername || "admin",
+            adminKey: keyToUse
+          })
+        });
+        return await res.json();
+      };
+
+      try {
+        const prevPendingIds = new Set(dbOrders.filter(o => o.status === "Pending").map(o => o.id));
+        const primaryKey = appState.adminKeySession || dbSettings.adminSecretPin || "memento2026";
+        let data = await fetchDashboard(primaryKey);
+        if ((!data || !data.ok) && primaryKey !== "memento2026") {
+          data = await fetchDashboard("memento2026");
+        }
+
+        if (data && data.ok) {
+          if (Array.isArray(data.orders)) {
+            const localMap = {};
+            dbOrders.forEach(lo => { localMap[lo.id] = lo; });
+            dbOrders = data.orders.map(co => {
+              const localMatch = localMap[co.id];
+              if (localMatch) {
+                if ((!co.photos || co.photos.length === 0) && localMatch.photos) co.photos = localMatch.photos;
+                if (!co.slipDataUrl && localMatch.slipDataUrl) co.slipDataUrl = localMatch.slipDataUrl;
+              }
+              return co;
+            });
+            safeSetStorage("memento_db_orders_v5", dbOrders);
+
+            const hasNewPending = dbOrders.some(o => o.status === "Pending" && !prevPendingIds.has(o.id));
+            if (hasNewPending) {
+              playOrderNotificationSound(false);
+              showToast("🔔 New Customer Order Arrived!");
+            }
+          }
+          if (Array.isArray(data.customers) && data.customers.length > 0) {
+            dbCustomers = data.customers;
+            safeSetStorage("memento_db_customers_v5", dbCustomers);
+          }
+
+          const cloudSettings = data.settings;
+          const cloudTime = Number((cloudSettings && cloudSettings.updatedAt) || 0);
+          const localTime = Number(dbSettings.updatedAt || 0);
+
+          if (cloudSettings && Object.keys(cloudSettings).length > 0) {
+            if (cloudTime > localTime || localTime === 0) {
+              const keepUrl = dbSettings.gasWebAppUrl;
+              const keepTgTok = cloudSettings.telegramBotToken || dbSettings.telegramBotToken || DEFAULT_SETTINGS.telegramBotToken;
+              const keepTgChat = cloudSettings.telegramChatId || dbSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId;
+              dbSettings = Object.assign({}, dbSettings, cloudSettings, {
+                gasWebAppUrl: cloudSettings.gasWebAppUrl || keepUrl,
+                adminUsername: cloudSettings.adminUsername || dbSettings.adminUsername || "admin",
+                adminSecretPin: cloudSettings.adminSecretPin || dbSettings.adminSecretPin || "memento2026",
+                telegramBotToken: keepTgTok,
+                telegramChatId: keepTgChat
+              });
+              safeSetStorage("memento_db_settings_v5", dbSettings);
+              switchPlatformTheme(appState.activeTheme, true);
+              if (Array.isArray(data.products) && data.products.length > 0) {
+                dbProducts = data.products;
+                safeSetStorage("memento_db_products_v5", dbProducts);
+              }
+              if (data.finance && data.finance.batches) {
+                dbFinance = data.finance;
+                safeSetStorage("memento_db_finance_v5", dbFinance);
+              }
+            } else if (localTime > cloudTime) {
+              // Local settings are newer than cloud -> push local settings to Google Sheet so cloud stays up to date!
+              syncStoreConfigToCloud();
+            }
+          } else if (localTime > 0) {
+            syncStoreConfigToCloud();
+          }
+
+          if (silent) {
+            // Background poll: ONLY refresh Orders, Finance & Customers—NEVER overwrite Settings or Products input fields while Admin is editing!
+            updateHeaderBadges();
+            updateTopAlarmBarUI();
+            renderAdminOrdersTab();
+            renderAdminInventoryAndFinanceTab();
+            renderAdminCustomersTab();
+          } else {
+            renderAdminPanelAll();
+            showToast("✓ Synced latest orders & settings from Google Sheet");
+          }
+        }
+      } catch (e) {
+        if (!silent) showToast("Cloud sync failed — check connection", "error");
+      } finally {
+        if (syncTxt) syncTxt.textContent = "Sync Cloud";
+      }
+    }
+
+    // Sync Customer's Own Orders from Cloud on Page Load & Poll Active Waiting Order Status
+    async function syncMyCustomerOrdersFromCloud(customQuery = "") {
+      if (!dbSettings.gasWebAppUrl) return [];
+      try {
+        const phone = sanitizePhoneEnglish(appState.customerPhone || "");
+        const url = `${dbSettings.gasWebAppUrl}?action=trackOrders&token=${encodeURIComponent(appState.deviceToken)}&phone=${encodeURIComponent(phone)}&query=${encodeURIComponent(customQuery)}&_t=${Date.now()}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data && data.ok && Array.isArray(data.orders)) {
+          const existingMap = {};
+          dbOrders.forEach(o => { existingMap[o.id] = o; });
+          data.orders.forEach(co => {
+            const prev = existingMap[co.id];
+            if (prev) {
+              prev.status = co.status;
+              prev.deliveryDays = co.deliveryDays || prev.deliveryDays;
+              prev.cancelReason = co.cancelReason || prev.cancelReason;
+            } else {
+              dbOrders.push(co);
+            }
+          });
+          safeSetStorage("memento_db_orders_v5", dbOrders);
+          updateHeaderBadges();
+          if (appState.mainView === "myorders" && !customQuery) {
+            renderMyOrdersView();
+          }
+          if (appState.currentStep === 5 && appState.activeOrderId) {
+            renderStep5OrderStatusScreen(appState.activeOrderId);
+          }
+          return data.orders;
+        }
+      } catch (e) {}
+      return [];
+    }
+
+    function startCustomerOrderStatusPollingLoop() {
+      setInterval(() => {
+        if (appState.mainView !== "admin" && dbSettings.gasWebAppUrl) {
+          const myPending = getMyOwnOrders().some(o => o.status === "Pending" || o.status === "Confirmed" || o.status === "Printed");
+          if (myPending || appState.currentStep === 5 || appState.mainView === "myorders") {
+            syncMyCustomerOrdersFromCloud();
+          }
+        }
+      }, 7000);
     }
 
     function switchPlatformTheme(themeKey, silent = false) {
@@ -3865,6 +4210,7 @@
         try {
           const res = await fetch(dbSettings.gasWebAppUrl, {
             method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({
               action: "initOrderFolder",
               orderId: newOrderId,
@@ -3880,6 +4226,7 @@
         } catch (e) {}
       }
 
+      const uploadedPhotoUrls = [];
       for (let i = 0; i < totalPhotos; i++) {
         const itemNum = i + 1;
         const pct = Math.round((itemNum / (totalPhotos + 1)) * 100);
@@ -3895,8 +4242,9 @@
 
         if (dbSettings.gasWebAppUrl && driveFolderId) {
           try {
-            await fetch(dbSettings.gasWebAppUrl, {
+            const upRes = await fetch(dbSettings.gasWebAppUrl, {
               method: "POST",
+              headers: { "Content-Type": "text/plain;charset=utf-8" },
               body: JSON.stringify({
                 action: "uploadOrderPhoto",
                 orderId: newOrderId,
@@ -3906,16 +4254,23 @@
                 index: itemNum
               })
             });
+            const upData = await upRes.json();
+            if (upData && upData.fileUrl) uploadedPhotoUrls.push(upData.fileUrl);
           } catch (e) {}
         }
 
-        await new Promise(r => setTimeout(r, 180));
+        await new Promise(r => setTimeout(r, 150));
       }
 
       headline.textContent = `${dbSettings.uploadProgressText} (100%)`;
       subtext.textContent = `အော်ဒါစာရင်း သိမ်းဆည်းနေပါသည်...`;
       barFill.style.width = "100%";
-      await new Promise(r => setTimeout(r, 220));
+
+      // Create compact thumbnails (~4KB each) so localStorage & Google Sheet sync NEVER exceed quota!
+      const photoThumbs = await Promise.all(
+        appState.photos.slice(0, 7).map(p => compressImageDataUrl(p.croppedDataUrl, 160, 0.72, false))
+      );
+      const slipThumb = await compressImageDataUrl(appState.slipDataUrl, 340, 0.76, false);
 
       const newOrder = {
         id: newOrderId,
@@ -3924,7 +4279,7 @@
         status: "Pending",
         deliveryDays: Number(dbSettings.defaultDeliveryDays || 1),
         customerName: appState.customerName,
-        phone: appState.customerPhone,
+        phone: sanitizePhoneEnglish(appState.customerPhone),
         address: appState.customerAddress,
         deviceToken: appState.deviceToken,
         productId: prod.id,
@@ -3941,17 +4296,36 @@
         txLast4: d.txLast4 || d.tranId.slice(-4),
         ocrData: d,
         slipHash: appState.slipHash,
-        slipDataUrl: appState.slipDataUrl,
+        slipDataUrl: slipThumb,
         driveFolderUrl: driveFolderUrl,
-        photos: appState.photos.map(p => p.croppedDataUrl),
+        photos: photoThumbs,
         note: appState.customerNote
       };
 
+      // 1. Send Instant Telegram Order Alert + Payment Slip Photo directly to Telegram Group
+      let tgDirectSent = false;
+      try {
+        tgDirectSent = await sendNewOrderTelegramAlertDirect(newOrder, appState.slipDataUrl, driveFolderUrl);
+      } catch (e) {}
+
+      // 2. Save Full Order Row to Google Sheet Database
       if (dbSettings.gasWebAppUrl) {
         try {
+          const cloudOrderPayload = Object.assign({}, newOrder, {
+            slipFullDataUrl: appState.slipDataUrl,
+            slipThumbDataUrl: slipThumb,
+            photoThumbs: photoThumbs,
+            photoUrls: uploadedPhotoUrls,
+            skipTelegram: tgDirectSent
+          });
           await fetch(dbSettings.gasWebAppUrl, {
             method: "POST",
-            body: JSON.stringify({ action: "finalizeOrder", order: newOrder })
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "finalizeOrder",
+              folderId: driveFolderId,
+              order: cloudOrderPayload
+            })
           });
         } catch (e) {}
       }
@@ -3989,8 +4363,7 @@
       saveDraftState();
       updateHeaderBadges();
 
-      // Ring notification sound immediately when new order arrives!
-      playOrderNotificationSound(false);
+      // Note: Admin notification sound ONLY rings on Admin devices, never on the Customer's phone!
 
       renderStep5OrderStatusScreen(newOrderId);
     }
@@ -4517,16 +4890,48 @@
     // 11. PRIVACY-ISOLATED CUSTOMER "MY ORDERS" VIEW
     // =========================================================================
     function getMyOwnOrders() {
-      return dbOrders.filter(o => o.deviceToken === appState.deviceToken);
+      const myPhone = sanitizePhoneEnglish(appState.customerPhone || "");
+      return dbOrders.filter(o =>
+        (o.deviceToken && o.deviceToken === appState.deviceToken) ||
+        (myPhone.length >= 7 && sanitizePhoneEnglish(o.phone || "") === myPhone)
+      );
     }
 
-    function renderMyOrdersView() {
+    async function searchCustomerOrderByQuery() {
+      const inp = document.getElementById("customerOrderTrackInput");
+      const rawQ = toEnglishDigits((inp?.value || "").trim());
+      if (!rawQ) {
+        renderMyOrdersView();
+        return;
+      }
+      if (dbSettings.gasWebAppUrl) {
+        showToast("🔍 အော်ဒါစာရင်း ရှာဖွေနေပါသည်...");
+        await syncMyCustomerOrdersFromCloud(rawQ);
+      }
+      renderMyOrdersView(rawQ);
+    }
+
+    function renderMyOrdersView(searchQuery = "") {
       const container = document.getElementById("myOrdersListContainer");
       if (!container) return;
 
-      const myOrders = getMyOwnOrders();
+      const q = toEnglishDigits(String(searchQuery || document.getElementById("customerOrderTrackInput")?.value || "").trim()).toLowerCase().replace(/^#/, "");
+      let myOrders = q
+        ? dbOrders.filter(o => {
+            const oId = String(o.id || "").toLowerCase();
+            const oPhone = sanitizePhoneEnglish(o.phone || "");
+            const qDigits = q.replace(/[^0-9]/g, "");
+            return oId.includes(q) || (qDigits.length >= 7 && oPhone.includes(qDigits));
+          })
+        : getMyOwnOrders();
+
       if (myOrders.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-xs" style="color: var(--theme-muted);">No orders placed from this device yet.</div>`;
+        const isMM = appState.lang === "my";
+        container.innerHTML = `<div class="p-8 text-center text-xs leading-relaxed" style="color: var(--theme-muted);">${
+          q
+            ? (isMM ? `"${q}" ဖြင့် အော်ဒါ မတွေ့ရှိပါ။ ဖုန်းနံပါတ် သို့မဟုတ် အော်ဒါနံပါတ် အမှန်ရိုက်ထည့်၍ ပြန်ရှာကြည့်ပါ။` : `No orders found matching "${q}".`)
+            : (isMM ? `ဤဖုန်းမှ တင်ထားသော အော်ဒါ မရှိသေးပါ။ အပေါ်ရှိ အကွက်တွင် ဖုန်းနံပါတ် သို့မဟုတ် အော်ဒါနံပါတ် ရိုက်ထည့်၍လည်း ရှာဖွေနိုင်ပါသည်။` : `No orders on this device yet. Enter your Phone Number or Order ID above to track your order.`)
+        }</div>`;
         return;
       }
 
@@ -4999,17 +5404,38 @@
       openSlipLightbox(order.slipDataUrl, order.ocrData);
     }
 
+    async function syncOrderStatusToCloud(order, addFraudFlag = false) {
+      if (!dbSettings.gasWebAppUrl || !order) return;
+      try {
+        await fetch(dbSettings.gasWebAppUrl, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "updateOrderStatus",
+            username: appState.adminUserSession || dbSettings.adminUsername || "admin",
+            adminKey: appState.adminKeySession || dbSettings.adminSecretPin || "memento2026",
+            orderId: order.id,
+            status: order.status,
+            deliveryDays: order.deliveryDays || 1,
+            cancelReason: order.cancelReason || "",
+            addFraudFlag: addFraudFlag
+          })
+        });
+      } catch (e) {}
+    }
+
     function quickOneTapConfirmOrder(orderId) {
       const order = dbOrders.find(o => o.id === orderId);
       if (!order) return;
       order.status = "Confirmed";
       order.deliveryDays = Number(dbSettings.defaultDeliveryDays || 1);
       safeSetStorage("memento_db_orders_v5", dbOrders);
+      syncOrderStatusToCloud(order, false);
       if (appState.activeOrderId === order.id) {
         renderStep5OrderStatusScreen(order.id);
       }
       renderAdminPanelAll();
-      showToast(`✅ Order #${order.id} Confirmed & moved to "To Print" queue!`);
+      showToast(`✅ Order #${order.id} Confirmed & synced to Cloud!`);
     }
 
     function advanceOrderStage(orderId, nextStage) {
@@ -5017,6 +5443,7 @@
       if (!order) return;
       order.status = nextStage;
       safeSetStorage("memento_db_orders_v5", dbOrders);
+      syncOrderStatusToCloud(order, false);
       renderAdminPanelAll();
       showToast(`✓ Order #${order.id} marked as ${nextStage}!`);
     }
@@ -5068,6 +5495,7 @@
         safeSetStorage("memento_db_customers_v5", dbCustomers);
       }
 
+      syncOrderStatusToCloud(order, addFlag);
       closeCancelOrderModal();
       if (appState.activeOrderId === order.id) {
         renderStep5OrderStatusScreen(order.id);
@@ -5518,6 +5946,7 @@
       item.includedInPack = checked;
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
     }
 
     function openAddSupplyModal() {
@@ -5585,6 +6014,7 @@
 
       safeSetStorage("memento_db_finance_v5", dbFinance);
       closeSupplyModal();
+      syncStoreConfigToCloud();
       renderAdminInventoryAndFinanceTab();
       showToast(`✓ Saved supply item: ${name}`);
     }
@@ -5593,6 +6023,7 @@
       dbFinance.supplies = (dbFinance.supplies || []).filter(s => s.id !== supId);
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast("🗑️ Supply item deleted");
     }
 
@@ -5683,6 +6114,7 @@
 
       safeSetStorage("memento_db_finance_v5", dbFinance);
       closeEditLedgerModal();
+      syncStoreConfigToCloud();
       renderAdminInventoryAndFinanceTab();
       showToast("✓ Ledger record updated");
     }
@@ -5699,6 +6131,7 @@
       }
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast("🗑️ Ledger record deleted");
     }
 
@@ -5707,6 +6140,7 @@
       dbFinance.initialCapital = val;
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast(`✓ Capital updated (${formatKsAdmin(val)})`);
     }
 
@@ -5751,6 +6185,7 @@
       });
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast(`✓ Added ${qty} pcs of ${prod.name} (Unit: ${formatKsAdmin(unit)})`);
     }
 
@@ -5774,6 +6209,7 @@
       document.getElementById("wasteNoteInput").value = "";
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast(`⚠️ Deducted ${qty} damaged pcs of ${prod.name}`);
     }
 
@@ -5795,6 +6231,7 @@
       document.getElementById("expAmountInput").value = "";
       safeSetStorage("memento_db_finance_v5", dbFinance);
       renderAdminInventoryAndFinanceTab();
+      syncStoreConfigToCloud();
       showToast(`✓ Expense (${formatKsAdmin(amount)}) recorded`);
     }
 
@@ -6052,8 +6489,8 @@
       const idx = appState.changePhotoTargetProductIdx;
       if (!file || idx < 0 || !dbProducts[idx]) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        dbProducts[idx].image = e.target.result;
+      reader.onload = async function(e) {
+        dbProducts[idx].image = await compressImageDataUrl(e.target.result, 520, 0.84, false);
         safeSetStorage("memento_db_products_v5", dbProducts);
         renderAdminProductsTab();
         renderStorefrontProductsAndSets();
@@ -6066,8 +6503,10 @@
     function saveAdminDeliveryFee() {
       const val = Number(document.getElementById("adminDeliFeeInput").value || 0);
       dbSettings.prepaidDeliveryFee = val;
+      dbSettings.updatedAt = Date.now();
       safeSetStorage("memento_db_settings_v5", dbSettings);
-      showToast(`✓ Delivery fee updated (${formatKsAdmin(val)})`);
+      syncStoreConfigToCloud();
+      showToast(`✓ Delivery fee updated (${formatKsAdmin(val)}) & synced`);
     }
 
     function updateSetPrice(pIdx, sIdx, newPrice) {
@@ -6145,9 +6584,10 @@
       const file = (event.target.files || [])[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        appState.newProductPendingImgDataUrl = e.target.result;
-        document.getElementById("newProdImgPreview").src = e.target.result;
+      reader.onload = async function(e) {
+        const comp = await compressImageDataUrl(e.target.result, 520, 0.84, false);
+        appState.newProductPendingImgDataUrl = comp;
+        document.getElementById("newProdImgPreview").src = comp;
       };
       reader.readAsDataURL(file);
     }
@@ -6213,6 +6653,10 @@
       const userEl = document.getElementById("cfgAdminUsername");
       if (userEl) userEl.value = dbSettings.adminUsername || "admin";
       document.getElementById("cfgAdminSecretPin").value = dbSettings.adminSecretPin || "memento2026";
+      const tgTokEl = document.getElementById("cfgTelegramBotToken");
+      if (tgTokEl) tgTokEl.value = dbSettings.telegramBotToken || "";
+      const tgChatEl = document.getElementById("cfgTelegramChatId");
+      if (tgChatEl) tgChatEl.value = dbSettings.telegramChatId || "";
       document.getElementById("cfgAlarmEnabled").value = dbSettings.alarmEnabled !== false ? "true" : "false";
       document.getElementById("cfgAlarmIntervalSec").value = String(dbSettings.alarmIntervalSec || 15);
       const songLbl = document.getElementById("customSongStatusLabel");
@@ -6277,12 +6721,15 @@
       const file = (event.target.files || [])[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        dbSettings.logoDataUrl = e.target.result;
+      reader.onload = async function(e) {
+        const compressed = await compressImageDataUrl(e.target.result, 420, 0.88, true);
+        dbSettings.logoDataUrl = compressed;
         safeSetStorage("memento_db_settings_v5", dbSettings);
         switchPlatformTheme(appState.activeTheme, true);
-        syncStoreConfigToCloud();
-        showToast("✓ Logo updated & synced");
+        const lbl = document.getElementById("cfgLogoBtnLabel");
+        if (lbl) lbl.textContent = "✓ Logo Uploaded";
+        await syncStoreConfigToCloud();
+        showToast("✓ Logo saved & synced to Cloud");
       };
       reader.readAsDataURL(file);
     }
@@ -6291,29 +6738,40 @@
       const file = (event.target.files || [])[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        if (method === "KPay") dbSettings.kpayQrDataUrl = e.target.result;
-        else dbSettings.ayaQrDataUrl = e.target.result;
+      reader.onload = async function(e) {
+        const compressed = await compressImageDataUrl(e.target.result, 500, 0.86, false);
+        if (method === "KPay") {
+          dbSettings.kpayQrDataUrl = compressed;
+          const lbl = document.getElementById("cfgKpayQrBtnLabel");
+          if (lbl) lbl.textContent = "✓ KPay QR Uploaded";
+        } else {
+          dbSettings.ayaQrDataUrl = compressed;
+          const lbl = document.getElementById("cfgAyaQrBtnLabel");
+          if (lbl) lbl.textContent = "✓ AYA Pay QR Uploaded";
+        }
         safeSetStorage("memento_db_settings_v5", dbSettings);
-        syncStoreConfigToCloud();
-        showToast(`✓ ${method} QR updated & synced`);
+        await syncStoreConfigToCloud();
+        showToast(`✓ ${method} QR saved & synced to Cloud`);
       };
       reader.readAsDataURL(file);
     }
 
     function previewBrandFontSelection(fontVal) {
       dbSettings.brandFont = fontVal;
+      safeSetStorage("memento_db_settings_v5", dbSettings);
       switchPlatformTheme(appState.activeTheme, true);
+      syncStoreConfigToCloud();
     }
 
     function clearAdminLogo() {
       dbSettings.logoDataUrl = "";
       safeSetStorage("memento_db_settings_v5", dbSettings);
       switchPlatformTheme(appState.activeTheme, true);
+      syncStoreConfigToCloud();
       showToast("↺ Reset to default monogram logo");
     }
 
-    function saveAllAdminSettings() {
+    async function saveAllAdminSettings() {
       dbSettings.brandName = (document.getElementById("cfgBrandName").value || "MEMENTO").trim();
       dbSettings.brandFont = document.getElementById("cfgBrandFont")?.value || "'Playfair Display', Georgia, serif";
       dbSettings.hideBrandTextWithLogo = !!document.getElementById("cfgHideBrandTextWithLogo")?.checked;
@@ -6326,37 +6784,229 @@
       dbSettings.waitingScreenText = (document.getElementById("cfgWaitingText").value || "").trim();
       dbSettings.confirmReplyTemplate = (document.getElementById("cfgConfirmTemplateText").value || "").trim();
       dbSettings.defaultDeliveryDays = Number(document.getElementById("cfgDefaultDeliveryDays").value || 1);
+      dbSettings.updatedAt = Date.now();
 
       safeSetStorage("memento_db_settings_v5", dbSettings);
       switchPlatformTheme(appState.activeTheme, true);
-      syncStoreConfigToCloud();
-      showToast("✓ Brand, Font & Payment settings saved & synced");
+      renderStorefrontProductsAndSets();
+      updateStepUI();
+
+      const synced = await syncStoreConfigToCloud();
+      if (synced) {
+        showToast("✓ Saved & updated in Google Sheet Database!");
+      } else {
+        showToast("✓ Brand, Font & Payment settings saved");
+      }
     }
 
-    function saveCloudCredentials() {
+    async function saveCloudCredentials() {
+      const prevUser = appState.adminUserSession || dbSettings.adminUsername || "admin";
+      const prevKey = appState.adminKeySession || dbSettings.adminSecretPin || "memento2026";
+
       dbSettings.gasWebAppUrl = (document.getElementById("cfgGasWebAppUrl").value || "").trim();
       const newUser = (document.getElementById("cfgAdminUsername")?.value || "").trim();
       const newPin = (document.getElementById("cfgAdminSecretPin").value || "").trim();
+      const tgTok = (document.getElementById("cfgTelegramBotToken")?.value || "").trim();
+      const tgChat = (document.getElementById("cfgTelegramChatId")?.value || "").trim();
+
       if (newUser) dbSettings.adminUsername = newUser;
       if (newPin) dbSettings.adminSecretPin = newPin;
+      dbSettings.telegramBotToken = tgTok || DEFAULT_SETTINGS.telegramBotToken;
+      dbSettings.telegramChatId = tgChat || DEFAULT_SETTINGS.telegramChatId;
+      dbSettings.updatedAt = Date.now();
+
       safeSetStorage("memento_db_settings_v5", dbSettings);
-      syncStoreConfigToCloud();
-      showToast("✓ Credentials saved & Store Config synced to Cloud");
+
+      if (dbSettings.gasWebAppUrl) {
+        try {
+          await fetch(dbSettings.gasWebAppUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "updateAdminCredentials",
+              currentUsername: prevUser,
+              adminKey: prevKey,
+              newUsername: dbSettings.adminUsername,
+              newPassword: dbSettings.adminSecretPin
+            })
+          });
+        } catch (e) {}
+      }
+
+      appState.adminUserSession = dbSettings.adminUsername;
+      appState.adminKeySession = dbSettings.adminSecretPin;
+
+      const synced = await syncStoreConfigToCloud();
+      if (synced) {
+        showToast("✓ Saved & synced to Google Sheet Settings!");
+      } else {
+        showToast("✓ Saved locally (Connect GAS URL to sync to Google Sheet)");
+      }
     }
 
     async function testCloudConnections() {
-      saveCloudCredentials();
+      await saveCloudCredentials();
       if (!dbSettings.gasWebAppUrl) {
         showToast("Enter Google Apps Script URL first", "warning");
         return;
       }
       try {
-        const r = await fetch(dbSettings.gasWebAppUrl + "?action=ping");
+        const r = await fetch(dbSettings.gasWebAppUrl + "?action=ping&_t=" + Date.now());
         const d = await r.json();
-        if (d && d.ok) showToast("✓ Connected to Google Sheet & Drive");
+        if (d && d.ok) {
+          showToast("✓ Connected to Google Sheet & Drive!");
+          syncAdminDashboardFromCloud(false);
+        } else {
+          showToast("Connection error — check deployment permissions", "error");
+        }
       } catch (e) {
-        showToast("Connection failed — check URL", "error");
+        showToast("Connection failed — ensure Who has access = Anyone", "error");
       }
+    }
+
+    // Direct Browser-to-Telegram Bot API Helpers (Works immediately even without re-deploying Code.gs)
+    async function sendTelegramDirectMessage(htmlText) {
+      const botToken = (dbSettings.telegramBotToken || DEFAULT_SETTINGS.telegramBotToken || "").trim();
+      const chatId = (dbSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId || "").trim();
+      if (!botToken || !chatId) return { ok: false, error: "Missing Bot Token or Chat ID" };
+      const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: htmlText,
+          parse_mode: "HTML",
+          disable_web_page_preview: false
+        })
+      });
+      return await res.json();
+    }
+
+    async function sendTelegramDirectPhoto(dataUrl, caption) {
+      const botToken = (dbSettings.telegramBotToken || DEFAULT_SETTINGS.telegramBotToken || "").trim();
+      const chatId = (dbSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId || "").trim();
+      if (!botToken || !chatId || !dataUrl || !dataUrl.startsWith("data:image/")) return { ok: false };
+      const arr = dataUrl.split(",");
+      const mime = (arr[0].match(/:(.*?);/) || [])[1] || "image/png";
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) u8arr[n] = bstr.charCodeAt(n);
+      const blob = new Blob([u8arr], { type: mime });
+
+      const form = new FormData();
+      form.append("chat_id", chatId);
+      form.append("caption", caption);
+      form.append("parse_mode", "HTML");
+      form.append("photo", blob, "payment_slip.png");
+
+      const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        body: form
+      });
+      return await res.json();
+    }
+
+    async function sendNewOrderTelegramAlertDirect(order, slipFullDataUrl, driveFolderUrl) {
+      const ocr = order.ocrData || {};
+      const msgLines = [
+        "🔔 <b>MEMENTO — NEW ORDER RECEIVED!</b>",
+        "━━━━━━━━━━━━━━━━━━━━",
+        `🆔 <b>Order ID:</b> <code>#${order.id}</code>`,
+        `👤 <b>Customer:</b> ${order.customerName || "-"}`,
+        `📞 <b>Phone:</b> <code>${order.phone || "-"}</code>`,
+        `📍 <b>Address:</b> ${order.address || "-"}`,
+        "━━━━━━━━━━━━━━━━━━━━",
+        `🧲 <b>Product:</b> ${order.productName || "-"} (${order.setName || "-"})`,
+        `🚚 <b>Delivery:</b> ${order.deliveryMode === "prepaid" ? "Prepaid (+3,000 Ks)" : "Pay on Arrival"}`,
+        `💰 <b>Order Total:</b> <b>${Number(order.total || 0).toLocaleString()} Ks</b>`,
+        "━━━━━━━━━━━━━━━━━━━━",
+        `🏦 <b>Payment:</b> ${order.paymentMethod || "-"}`,
+        `💵 <b>Slip Amount:</b> ${ocr.amount ? Number(ocr.amount).toLocaleString() + " Ks" : "-"}`,
+        `🕒 <b>Slip Time:</b> ${ocr.date || "-"} ${ocr.time || ""}`,
+        `🔢 <b>Tran ID:</b> <code>${ocr.tranId || order.txLast4 || "-"}</code>`,
+        driveFolderUrl ? `\n📂 <a href="${driveFolderUrl}">Open High-Res Print Photos in Google Drive</a>` : ""
+      ].filter(Boolean).join("\n");
+
+      const msgRes = await sendTelegramDirectMessage(msgLines);
+      if (slipFullDataUrl) {
+        await sendTelegramDirectPhoto(slipFullDataUrl, `🧾 Payment Slip for #${order.id} (${order.customerName})`);
+      }
+      return !!(msgRes && msgRes.ok);
+    }
+
+    async function testTelegramNotification() {
+      await saveCloudCredentials();
+      const botToken = (dbSettings.telegramBotToken || DEFAULT_SETTINGS.telegramBotToken || "").trim();
+      const chatId = (dbSettings.telegramChatId || DEFAULT_SETTINGS.telegramChatId || "").trim();
+      if (!botToken || !chatId) {
+        showToast("Enter Telegram Bot Token & Chat ID first", "warning");
+        return;
+      }
+      try {
+        showToast("✈️ Sending test message to Telegram...");
+        const directRes = await sendTelegramDirectMessage(
+          `✅ <b>MEMENTO Telegram Bot Connected!</b>\n\nYour Admin Panel is now linked to this chat (<code>${chatId}</code>). Every new customer order and payment slip will arrive here automatically!`
+        );
+        if (directRes && directRes.ok) {
+          showToast("✅ Test message delivered to your Telegram group!");
+          return;
+        }
+        // Fallback via GAS if direct fetch was blocked by browser extension
+        if (dbSettings.gasWebAppUrl) {
+          const r = await fetch(dbSettings.gasWebAppUrl, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify({
+              action: "testTelegram",
+              username: appState.adminUserSession || dbSettings.adminUsername,
+              adminKey: appState.adminKeySession || dbSettings.adminSecretPin
+            })
+          });
+          const d = await r.json();
+          if (d && d.ok) {
+            showToast("✅ Test message delivered to your Telegram group!");
+            return;
+          }
+        }
+        showToast("Telegram Error: " + ((directRes && directRes.description) || "Check Bot Token & Chat ID"), "error");
+      } catch (e) {
+        showToast("Telegram Error — check internet connection or Bot Token", "error");
+      }
+    }
+
+    // Generate & download a ready-to-deploy index.html with the Admin's Google Apps Script URL and Store Settings baked right into DEFAULT_SETTINGS!
+    function downloadPrelinkedIndexHtml() {
+      saveAllAdminSettings();
+      saveCloudCredentials();
+      let htmlSource = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      // Inject gasWebAppUrl, brandName, brandFont, kpay/aya phone numbers directly into DEFAULT_SETTINGS so every phone opening Vercel has it built in!
+      if (dbSettings.gasWebAppUrl) {
+        htmlSource = htmlSource.replace(/gasWebAppUrl:\s*"[^"]*"/, `gasWebAppUrl: "${dbSettings.gasWebAppUrl}"`);
+      }
+      if (dbSettings.brandName) {
+        htmlSource = htmlSource.replace(/brandName:\s*"[^"]*"/, `brandName: "${dbSettings.brandName.replace(/"/g, '\\"')}"`);
+      }
+      if (dbSettings.kpayName) {
+        htmlSource = htmlSource.replace(/kpayName:\s*"[^"]*"/, `kpayName: "${dbSettings.kpayName.replace(/"/g, '\\"')}"`);
+      }
+      if (dbSettings.kpayPhone) {
+        htmlSource = htmlSource.replace(/kpayPhone:\s*"[^"]*"/, `kpayPhone: "${dbSettings.kpayPhone.replace(/"/g, '\\"')}"`);
+      }
+      if (dbSettings.ayaName) {
+        htmlSource = htmlSource.replace(/ayaName:\s*"[^"]*"/, `ayaName: "${dbSettings.ayaName.replace(/"/g, '\\"')}"`);
+      }
+      if (dbSettings.ayaPhone) {
+        htmlSource = htmlSource.replace(/ayaPhone:\s*"[^"]*"/, `ayaPhone: "${dbSettings.ayaPhone.replace(/"/g, '\\"')}"`);
+      }
+      const blob = new Blob([htmlSource], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "index.html";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      showToast("📥 Downloaded pre-linked index.html for Vercel!");
     }
 
     function exportOrdersCsv() {
